@@ -15,7 +15,7 @@ def def_clientes(cantidad_clientes, f):
         f.write("    depends_on:\n")
         f.write("      - server\n")
         f.write("    volumes:\n")  # Montar archivo de configuración externo
-        f.write(f"      - ./config.yaml:/config.yaml\n")
+        f.write(f"      - ./client/config.yaml:./config.yaml\n")
         f.write("\n")
 
 def def_network(f):
@@ -37,7 +37,7 @@ def def_server(f):
     f.write("    networks:\n")
     f.write("      - testing_net\n")
     f.write("    volumes:\n")  # Montar archivo de configuración externo
-    f.write("      - ./config.ini:/config.ini\n")
+    f.write("      - ./server/config.ini:./config.ini\n")
     f.write("\n")
 
 
