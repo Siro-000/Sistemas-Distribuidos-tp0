@@ -42,7 +42,7 @@ func NewClient(config ClientConfig) *Client {
 
 func (c *Client) listenSignals() {
 	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, os.Interrupt, os.Kill)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		sig := <-sigCh
 		log.Infof("Received signal %v, shutting down gracefully...", sig)
