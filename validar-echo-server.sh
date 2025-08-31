@@ -7,9 +7,6 @@ SERVER_PORT=$(grep "^SERVER_PORT" server/config.ini | cut -d '=' -f2 | tr -d '[:
 
 TEST_MSG="Hello"
 
-if ! docker network ls | grep -q "testing_net"; then
-    docker network create testing_net
-fi
 
 RESULT=$(docker run --rm --network testing_net busybox sh -c "\
   echo '$TEST_MSG' | nc $SERVER_CONTAINER $SERVER_PORT -w 2")
