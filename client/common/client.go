@@ -76,11 +76,12 @@ func (c *Client) StartClientLoop() {
 	c.listenSignals()
 	// There is an autoincremental msgID to identify every message sent
 	// Messages if the message amount threshold has not been surpassed
+	Loop:
 	for msgID := 1; msgID <= c.config.LoopAmount; msgID++ {
 		select {
 		case <-c.ctx.Done():
 			log.Infof("Client %v stopping loop gracefully", c.config.ID)
-			break
+			break Loop
 		default:
 			
 			if err := c.createClientSocket(); err != nil {
