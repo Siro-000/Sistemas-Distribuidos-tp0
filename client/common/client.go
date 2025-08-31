@@ -76,7 +76,7 @@ func (c *Client) StartClientLoop() {
 	c.listenSignals()
 	// There is an autoincremental msgID to identify every message sent
 	// Messages if the message amount threshold has not been surpassed
-	Loop:
+	log.Infof("Empieza el bucle")
 	for msgID := 1; msgID <= c.config.LoopAmount; msgID++ {
 		select {
 		case <-c.ctx.Done():
