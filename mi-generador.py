@@ -18,6 +18,7 @@ def def_clientes(cantidad_clientes, f):
 def def_network(f):
     f.write("networks:\n")
     f.write("  testing_net:\n")
+    f.write("    name: testing_net\n")
     f.write("    ipam:\n")
     f.write("      driver: default\n")
     f.write("      config:\n")
