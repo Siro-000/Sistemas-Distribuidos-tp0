@@ -80,13 +80,11 @@ func (c *Client) StartClientLoop() {
 	c.listenSignals()
 	// There is an autoincremental msgID to identify every message sent
 	// Messages if the message amount threshold has not been surpassed
-	log.Infof("\n\naction: se empieza el buvle | result: success | client_id: \n\n")
+	Loop: 
 	for msgID := 1; msgID <= c.config.LoopAmount; msgID++ {
 		select {
 		case <-c.ctx.Done():
-			log.Infof("Salgo por aca")
-			log.Infof("action: loop_finished | result: success | client_id: %v", c.config.ID)
-			os.Exit(0) 
+			break Loop
 		default:
 			
 			if err := c.createClientSocket(); err != nil {
@@ -100,7 +98,6 @@ func (c *Client) StartClientLoop() {
 			c.conn.Close()
 
 			if err != nil {
-				log.Infof("Salgo por error al recivir")
 				log.Errorf("action: receive_message | result: fail | client_id: %v | error: %v",
 					c.config.ID, err)
 				return
@@ -112,6 +109,5 @@ func (c *Client) StartClientLoop() {
 			time.Sleep(c.config.LoopPeriod)
 		}
 	}
-	log.Infof("Salgo por donde termina el loop")
 	log.Infof("action: loop_finished | result: success | client_id: %v", c.config.ID)
 }
