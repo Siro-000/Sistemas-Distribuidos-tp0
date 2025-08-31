@@ -80,8 +80,8 @@ func (c *Client) StartClientLoop() {
 	for msgID := 1; msgID <= c.config.LoopAmount; msgID++ {
 		select {
 		case <-c.ctx.Done():
-			log.Infof("Client %v stopping loop gracefully", c.config.ID)
-			break Loop
+			log.Infof("action: loop_finished | result: success | client_id: %v", c.config.ID)
+			os.Exit(0) 
 		default:
 			
 			if err := c.createClientSocket(); err != nil {
