@@ -15,7 +15,7 @@ class Server:
         signal.signal(signal.SIGTERM, self._handle_sigterm)
 
     def _handle_sigterm(self, signum, frame):
-        logging.info("Received SIGTERM, shutting down gracefully...")
+        logging.info("action: received SIGTERM | result: in_progress")
         self.running = False
         
     def run(self):

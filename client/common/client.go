@@ -49,7 +49,7 @@ func (c *Client) listenSignals() {
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		sig := <-sigCh
-		log.Infof("Received signal %v, shutting down gracefully...", sig)
+		log.Infof("action: received signal %v | result: in_progress", sig)
 		c.cancel()
 		if c.conn != nil {
 			c.conn.Close()
