@@ -9,6 +9,7 @@ import (
     "os"
     "os/signal"
     "syscall"
+	"errors"
 
 	"github.com/op/go-logging"
 )
