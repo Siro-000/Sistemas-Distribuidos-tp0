@@ -16,7 +16,7 @@ func BuildPostBetRequest() PostBetRequest {
 	return PostBetRequest{
 		FirstName: os.Getenv("NOMBRE"),
 		LastName:  os.Getenv("APELLIDO"),
-		Document:  os.Getenv("DOCUMENTO"),
+		Document:  os.Getenv("dni"),
 		Birthdate: os.Getenv("NACIMIENTO"),
 		Number:    os.Getenv("NUMERO"),
 	}
