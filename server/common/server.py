@@ -2,8 +2,8 @@ import signal
 import socket
 import logging
 
-from server.common.bet_socket import BetSocket
-from server.common.utils import store_bets
+from .bet_socket import BetSocket
+from .utils import store_bets
 
 
 class Server:
