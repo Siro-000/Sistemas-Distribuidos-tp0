@@ -98,6 +98,10 @@ func (c *Client) StartClientLoop() {
 			c.conn.Close()
 
 			if err != nil {
+				if errors.Is(err, net.ErrClosed) {
+        			// signal
+        			continue
+    			}
 				log.Errorf("action: receive_message | result: fail | client_id: %v | error: %v",
 					c.config.ID, err)
 				return
