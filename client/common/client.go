@@ -8,7 +8,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/7574-sistemas-distribuidos/docker-compose-init/client/common"
 	"github.com/op/go-logging"
 )
 
@@ -28,7 +27,7 @@ type ClientConfig struct {
 // Client Entity that encapsulates how
 type Client struct {
 	config     ClientConfig
-	bet_socket common.BetSocket
+	bet_socket *BetSocket
 	ctx        context.Context
 	cancel     context.CancelFunc
 }
@@ -69,7 +68,7 @@ func (c *Client) createClientBetSocket() error {
 		return err
 	}
 
-	c.bet_socket = common.NewBetSocket(conn)
+	c.bet_socket = NewBetSocket(conn)
 	return nil
 }
 
@@ -79,7 +78,7 @@ func (c *Client) StartClientLoop(bet PostBetRequest) {
 		return
 	}
 
-	if err := c.bet_socket.SendBet(bet); err != nil {
+	if err := c.bet_socket.SendBet(&bet); err != nil {
 		log.Criticalf(
 			"action: send bet | result: fail | client_id: %v | error: %v",
 			c.config.ID,
