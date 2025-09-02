@@ -1,4 +1,3 @@
-import struct
 from .utils import Bet
 
 class IpMapAgenciNumber:
@@ -27,8 +26,9 @@ class BetSocket:
         return data
 
     def _recv_string(self) -> str:
+        # Leer longitud de 4 bytes big-endian
         raw_len = self._recv_all(4)
-        str_len = struct.unpack(">I", raw_len)[0]
+        str_len = int.from_bytes(raw_len, "big")
         raw_str = self._recv_all(str_len)
         return raw_str.decode("utf-8")
 
@@ -38,9 +38,9 @@ class BetSocket:
         document = self._recv_string()
         birthdate = self._recv_string()
 
-        # leer número (int64)
+        # leer número (int64, 8 bytes)
         number_bytes = self._recv_all(8)
-        number = struct.unpack(">Q", number_bytes)[0]
+        number = int.from_bytes(number_bytes, "big")
 
         return Bet(
             agency=self._ip_map_agenci_number.get_agency_number(
@@ -54,7 +54,8 @@ class BetSocket:
         )
 
     def confirm(self):
-        self._socket.sendall(bytes(4))
+        self._socket.sendall(bytes(1))
     
     def close(self):
         self._socket.close()
+

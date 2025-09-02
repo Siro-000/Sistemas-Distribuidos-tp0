@@ -65,7 +65,7 @@ func (b *BetSocket) SendBet(bet *PostBetRequest) error {
 }
 
 func (b *BetSocket) RecibeConfirm() error {
-	data, err := b.recvAll(4)
+	data, err := b.recvAll(1)
 	if err != nil {
 		return err
 	}
