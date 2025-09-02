@@ -7,7 +7,7 @@ import (
 type PostBetRequest struct {
 	FirstName string `json:"nombre"`
 	LastName  string `json:"apellido"`
-	Document  string `json:"dni"`
+	Document  string `json:"documento"`
 	Birthdate string `json:"nacimiento"`
 	Number    string `json:"numero"`
 }

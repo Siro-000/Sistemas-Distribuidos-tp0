@@ -49,7 +49,7 @@ class BetSocket:
             ),  
             first_name=bet_json["nombre"],
             last_name=bet_json["apellido"],
-            document=bet_json["dni"],
+            document=bet_json["documento"],
             birthdate=bet_json["nacimiento"],
             number=bet_json["numero"]
         )
