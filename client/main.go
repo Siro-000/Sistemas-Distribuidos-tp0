@@ -111,5 +111,11 @@ func main() {
 	}
 
 	client := common.NewClient(clientConfig)
-	client.StartClientLoop(common.BuildPostBetRequest())
+
+	bet, err := common.BuildPostBetRequest()
+	if err != nil {
+		log.Criticalf("%s", err)
+	}
+
+	client.StartClientLoop(bet)
 }

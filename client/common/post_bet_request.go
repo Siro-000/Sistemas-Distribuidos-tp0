@@ -1,6 +1,7 @@
 package common
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 )
@@ -13,11 +14,11 @@ type PostBetRequest struct {
 	Number    int64
 }
 
-func BuildPostBetRequest() PostBetRequest {
+func BuildPostBetRequest() (PostBetRequest, error) {
 	numeroStr := os.Getenv("NUMERO")
 	numeroInt, err := strconv.ParseInt(numeroStr, 10, 64)
 	if err != nil {
-		log.Fatalf("Error NUMERO to int64: %v", err)
+		return PostBetRequest{}, fmt.Errorf("error NUMERO to int64: %v", err)
 	}
 
 	return PostBetRequest{
@@ -26,5 +27,5 @@ func BuildPostBetRequest() PostBetRequest {
 		Document:  os.Getenv("DOCUMENTO"),
 		Birthdate: os.Getenv("NACIMIENTO"),
 		Number:    numeroInt,
-	}
+	}, nil
 }
