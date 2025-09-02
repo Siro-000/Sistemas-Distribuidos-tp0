@@ -2,7 +2,6 @@ package common
 
 import (
 	"encoding/binary"
-	"encoding/json"
 	"fmt"
 	"net"
 )
@@ -43,24 +42,26 @@ func (b *BetSocket) sendAll(data []byte) error {
 	return nil
 }
 
+func encodeString(s string) []byte {
+	buf := make([]byte, 4+len(s))
+	binary.BigEndian.PutUint32(buf[:4], uint32(len(s)))
+	copy(buf[4:], []byte(s))
+	return buf
+}
+
 func (b *BetSocket) SendBet(bet *PostBetRequest) error {
-	data, err := json.Marshal(bet)
-	if err != nil {
-		return fmt.Errorf("error al serializar JSON: %w", err)
-	}
+	var payload []byte
+	payload = append(payload, encodeString(bet.FirstName)...)
+	payload = append(payload, encodeString(bet.LastName)...)
+	payload = append(payload, encodeString(bet.Document)...)
+	payload = append(payload, encodeString(bet.Birthdate)...)
 
-	// Prefijo de longitud (4 bytes, big-endian)
-	lenBuf := make([]byte, 4)
-	binary.BigEndian.PutUint32(lenBuf, uint32(len(data)))
+	// número (int64 big-endian)
+	numBuf := make([]byte, 8)
+	binary.BigEndian.PutUint64(numBuf, uint64(bet.Number))
+	payload = append(payload, numBuf...)
 
-	// Enviar longitud + data
-	if err := b.sendAll(lenBuf); err != nil {
-		return err
-	}
-	if err := b.sendAll(data); err != nil {
-		return err
-	}
-	return nil
+	return b.sendAll(payload)
 }
 
 func (b *BetSocket) RecibeConfirm() error {
@@ -68,8 +69,6 @@ func (b *BetSocket) RecibeConfirm() error {
 	if err != nil {
 		return err
 	}
-
-	// Verificar que sean todos ceros
 	for _, v := range data {
 		if v != 0 {
 			return fmt.Errorf("confirmación inválida recibida: %v", data)

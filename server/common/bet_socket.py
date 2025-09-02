@@ -1,8 +1,5 @@
-import json
 import struct
-
 from .utils import Bet
-
 
 class IpMapAgenciNumber:
     def __init__(self):
@@ -15,14 +12,12 @@ class IpMapAgenciNumber:
             self.next_agency += 1
         return self.ip_to_agency[ip]
 
-
 class BetSocket:
     def __init__(self, socket):
         self._socket = socket
         self._ip_map_agenci_number = IpMapAgenciNumber()
     
-    def _recv_all(self, n):
-        """Lee exactamente n bytes o lanza error si la conexión se cierra antes."""
+    def _recv_all(self, n: int) -> bytes:
         data = b''
         while len(data) < n:
             packet = self._socket.recv(n - len(data))
@@ -30,34 +25,36 @@ class BetSocket:
                 raise ConnectionError("Socket cerrado antes de recibir todos los datos")
             data += packet
         return data
-     
-    def recibe_bet(self) -> Bet:
-        # Leer prefijo de 4 bytes (longitud del mensaje)
+
+    def _recv_string(self) -> str:
         raw_len = self._recv_all(4)
-        msg_len = struct.unpack('>I', raw_len)[0]
+        str_len = struct.unpack(">I", raw_len)[0]
+        raw_str = self._recv_all(str_len)
+        return raw_str.decode("utf-8")
 
-        # Leer mensaje completo
-        data = self._recv_all(msg_len)
+    def recibe_bet(self) -> Bet:
+        first_name = self._recv_string()
+        last_name = self._recv_string()
+        document = self._recv_string()
+        birthdate = self._recv_string()
 
-        # Parsear JSON
-        bet_json = json.loads(data)
+        # leer número (int64)
+        number_bytes = self._recv_all(8)
+        number = struct.unpack(">Q", number_bytes)[0]
 
-        # Crear objeto Bet
         return Bet(
             agency=self._ip_map_agenci_number.get_agency_number(
                 self._socket.getpeername()[0]
-            ),  
-            first_name=bet_json["nombre"],
-            last_name=bet_json["apellido"],
-            document=bet_json["documento"],
-            birthdate=bet_json["nacimiento"],
-            number=bet_json["numero"]
+            ),
+            first_name=first_name,
+            last_name=last_name,
+            document=document,
+            birthdate=birthdate,
+            number=number
         )
-        
-    def confirm(self): 
-        """Envía confirmación de 4 bytes cero al cliente."""
+
+    def confirm(self):
         self._socket.sendall(bytes(4))
     
     def close(self):
-        """Cierra la conexión del socket."""
         self._socket.close()
