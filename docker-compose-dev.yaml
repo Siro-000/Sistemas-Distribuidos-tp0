@@ -19,6 +19,12 @@ services:
       - server
     volumes:
       - ./client/config.yaml:/config.yaml
+    environment:
+      - NOMBRE=Cliente1
+      - APELLIDO=Apellido1
+      - DOCUMENTO=30000001
+      - NACIMIENTO=1990-01-01
+      - NUMERO=1
 
 networks:
   testing_net:

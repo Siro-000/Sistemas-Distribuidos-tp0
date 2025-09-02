@@ -50,7 +50,7 @@ class Server:
             bet_socket = BetSocket(client_sock)
             bet = bet_socket.recibe_bet()
             
-            store_bets(bet)
+            store_bets([bet])
             logging.info(f'action: apuesta_almacenada | result: success | dni: {bet.document} | numero: {bet.number}')
             
             bet_socket.confirm()
