@@ -56,6 +56,9 @@ class BetSocket:
     def confirm(self):
         self._socket.sendall(bytes(1))
     
+    def send_error(self):
+        self._socket.sendall(bytes([1]))
+        
     def close(self):
         self._socket.close()
 

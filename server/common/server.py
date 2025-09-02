@@ -57,6 +57,7 @@ class Server:
             
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")
+            bet_socket.confirm()
         finally:
             bet_socket.close()
 

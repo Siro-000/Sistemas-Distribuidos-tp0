@@ -93,9 +93,9 @@ func (c *Client) StartClientLoop(bet PostBetRequest) {
 			c.config.ID,
 			err,
 		)
-		return
+	} else {
+		log.Infof("action: apuesta_enviada | result: success | dni: %v | numero: %v", bet.Document, bet.Number)
 	}
 
 	c.bet_socket.Close()
-	log.Infof("action: apuesta_enviada | result: success | dni: %v | numero: %v", bet.Document, bet.Number)
 }
