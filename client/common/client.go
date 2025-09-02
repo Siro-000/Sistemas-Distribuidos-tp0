@@ -78,7 +78,6 @@ func (c *Client) StartClientLoop(bet PostBetRequest) {
 		return
 	}
 
-	log.Infof("\nla apuesta es %v\n", bet)
 	if err := c.bet_socket.SendBet(&bet); err != nil {
 		log.Criticalf(
 			"action: send bet | result: fail | client_id: %v | error: %v",

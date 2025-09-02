@@ -109,7 +109,7 @@ func main() {
 		LoopAmount:    v.GetInt("loop.amount"),
 		LoopPeriod:    v.GetDuration("loop.period"),
 	}
-	log.Infof("\nEste es el dni ingresado:%v\n", os.Getenv("NOMBRE"))
+
 	client := common.NewClient(clientConfig)
 	client.StartClientLoop(common.BuildPostBetRequest())
 }
