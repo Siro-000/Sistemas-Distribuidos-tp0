@@ -129,7 +129,7 @@ func (c *Client) StartClientLoop(csvPath string, batchSize int) {
 	if shouldReturn {
 		return
 	}
-
+	log.Infof("TErmino de ejecutar load bets")
 	result := WAIT_CODE
 
 	for result == WAIT_CODE {
@@ -139,10 +139,13 @@ func (c *Client) StartClientLoop(csvPath string, batchSize int) {
 		}
 
 		c.bet_communication.SendOperation(GIVE_WINNERS)
+		log.Infof("Mando operacion")
+
 		result, _ = c.bet_communication.Recibe()
 		if result == ERROR_CODE {
 			log.Criticalf("action: recibe  | result: fail | client_id: %v", c.config.ID)
-			break
+			c.bet_communication.Close()
+			return
 		}
 
 		time.Sleep(WAIT_TIME * time.Second)
@@ -183,16 +186,15 @@ func (c *Client) load_bets(csvPath string, batchSize int) bool {
 			problem = true
 			break
 		} else {
-			log.Infof("action: recibeConfrim batch | result: success | client_id: %v | cantidad: %d", c.config.ID, len(batch))
+			//log.Infof("action: recibeConfrim batch | result: success | client_id: %v | cantidad: %d", c.config.ID, len(batch))
 		}
 	}
 
 	if !problem {
 		c.bet_communication.SendEndOfBatch()
 		log.Infof("action: send all batch | result: success | client_id: %v", c.config.ID)
-		return true
 	}
 
 	c.bet_communication.Close()
-	return false
+	return problem
 }

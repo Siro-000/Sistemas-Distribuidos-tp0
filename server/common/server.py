@@ -17,7 +17,7 @@ class Server:
         self.running = True
         self.error = False
         self.amount_agency = 0 
-        self.agency_winers = {1:[],2:[],3:[],4:[],5:[]}
+        self.agency_winners = {1:[],2:[],3:[],4:[],5:[]}
         
         signal.signal(signal.SIGTERM, self._handle_sigterm)
 
@@ -81,7 +81,7 @@ class Server:
         else: 
             bet_commuication.confirm()
         
-        bet_commuication.send_winners(self.agency_winers)
+        bet_commuication.send_winners(self.agency_winners)
         logging.info("action: sorteo | result: success")
         
         
@@ -91,7 +91,7 @@ class Server:
             new_bets = amount_bets
                     
             while bets is not None: 
-                logging.info(f'action: apuesta_recibida  | result: success | cantidad: {new_bets}')
+                #logging.info(f'action: apuesta_recibida  | result: success | cantidad: {new_bets}')
                 store_bets(bets)
                 bet_communication.confirm_batch()
                         
@@ -105,6 +105,8 @@ class Server:
             else:     
                 logging.info(f'action: recibir apuestas  | result: success | cantidad: {amount_bets}')
                 self.amount_agency += 1
+                logging.info(f'La cantidad de agencias que ya mandaron: {self.amount_agency}')
+                
                     
         except Exception as e:
             self.error = True
