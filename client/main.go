@@ -113,5 +113,5 @@ func main() {
 	}
 
 	client := common.NewClient(clientConfig)
-	client.StartClientLoop("./data/agencia.csv", v.GetInt("batch.maxAmount"))
+	client.StartClientLoop("/data/agency.csv", v.GetInt("batch.maxAmount"))
 }

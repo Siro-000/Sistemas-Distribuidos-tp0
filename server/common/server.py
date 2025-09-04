@@ -49,22 +49,28 @@ class Server:
         try: 
             try:
                 bet_socket = BetSocket(client_sock)
-                bet, amount_bets = bet_socket.recibe_bet()
+                bets, amount_bets, e = bet_socket.recibe_bet_batch()
+                new_bets = amount_bets
                 
-                while bet is not None: 
-                    store_bets([bet])
-                    bet_socket.confirm()
+                while bets is not None: 
+                    store_bets(bets)
+                    bet_socket.confirm_batch()
                     
-                    bet, new_bets = bet_socket.recibe_bet()
+                    bets, new_bets, e = bet_socket.recibe_bet_batch()
                     amount_bets += new_bets
-                    
-                logging.info(f'action: apuesta_recibida  | result: success | cantidad: {amount_bets}')
-            
-            except:
-                logging.error(f"action: receive_message | result: fail | cantidad: {amount_bets}")
-                bet_socket.send_error()
+                    logging.info(f'action: apuesta_recibida  | result: success | cantidad: {new_bets}')
+                
+                if e: 
+                    logging.error(f"action: receive_message | result: fail | cantidad: {new_bets}")
+                    logging.error(f"action: receive_message | result: fail | Error: {e}")
+                else:     
+                    logging.info(f'action: recibir apuestas  | result: success | cantidad: {amount_bets}')
+                
+            except Exception as e:
+                logging.error(f"action: receive_message | result: fail | Error: {e}")
+                bet_socket.send_error_batch()
         except Exception as e: 
-            logging.error("action: handle client connection | result: fail | error: {e}")
+            logging.error(f"action: handle client connection | result: fail | error: {e}")
         finally:
             bet_socket.close()
 
