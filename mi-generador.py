@@ -13,12 +13,7 @@ def def_clientes(cantidad_clientes, f):
         f.write("      - server\n")
         f.write("    volumes:\n")  
         f.write(f"      - ./client/config.yaml:/config.yaml\n")
-        f.write("    environment:\n")
-        f.write(f"      - NOMBRE=Cliente{i}\n")
-        f.write(f"      - APELLIDO=Apellido{i}\n")
-        f.write(f"      - DOCUMENTO={30000000+i}\n")
-        f.write("      - NACIMIENTO=1990-01-01\n")
-        f.write(f"      - NUMERO={i}\n")
+        f.write(f"      - ./data/agency-{i}.csv:/data/agency.csv\n")
         f.write("\n")
 
 def def_network(f):

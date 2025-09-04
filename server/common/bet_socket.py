@@ -1,4 +1,5 @@
 from .utils import Bet
+from typing import Tuple
 
 class IpMapAgenciNumber:
     def __init__(self):
@@ -53,6 +54,25 @@ class BetSocket:
             number=number
         )
 
+    def recibe_bet_batch(self) -> Tuple[list[Bet], int]:
+        """Recibe un batch de apuestas"""
+        raw_len = self._recv_all(4)
+        batch_len = int.from_bytes(raw_len, "big")
+        
+        if batch_len == 0:
+            return (None, 0)
+        
+        bets = []
+        for _ in range(batch_len):
+            bets.append(self.recibe_bet())  
+        return (bets, batch_len)
+
+    def confirm_batch(self):
+        self._socket.sendall(bytes(1))
+
+    def send_error_batch(self):
+        self._socket.sendall(bytes([1]))
+        
     def confirm(self):
         self._socket.sendall(bytes(1))
     

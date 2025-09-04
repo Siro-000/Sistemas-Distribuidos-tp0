@@ -46,20 +46,29 @@ class Server:
         If a problem arises in the communication with the client, the
         client socket will also be closed
         """
-        try:
-            bet_socket = BetSocket(client_sock)
-            bet = bet_socket.recibe_bet()
+        try: 
+            try:
+                bet_socket = BetSocket(client_sock)
+                bet, amount_bets = bet_socket.recibe_bet()
+                
+                while bet is not None: 
+                    store_bets([bet])
+                    bet_socket.confirm()
+                    
+                    bet, new_bets = bet_socket.recibe_bet()
+                    amount_bets += new_bets
+                    
+                logging.info(f'action: apuesta_recibida  | result: success | cantidad: {amount_bets}')
             
-            store_bets([bet])
-            logging.info(f'action: apuesta_almacenada | result: success | dni: {bet.document} | numero: {bet.number}')
-            
-            bet_socket.confirm()
-            
-        except OSError as e:
-            logging.error("action: receive_message | result: fail | error: {e}")
-            bet_socket.send_error()
+            except:
+                logging.error(f"action: receive_message | result: fail | cantidad: {amount_bets}")
+                bet_socket.send_error()
+        except Exception as e: 
+            logging.error("action: handle client connection | result: fail | error: {e}")
         finally:
             bet_socket.close()
+
+        
 
     def __accept_new_connection(self):
         """

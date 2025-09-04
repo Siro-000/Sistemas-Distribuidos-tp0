@@ -2,9 +2,11 @@ package common
 
 import (
 	"context"
+	"encoding/csv"
 	"net"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -72,30 +74,79 @@ func (c *Client) createClientBetSocket() error {
 	return nil
 }
 
-func (c *Client) StartClientLoop(bet PostBetRequest) {
+func (c *Client) ReadBatches(filePath string, batchSize int) (<-chan []*PostBetRequest, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	ch := make(chan []*PostBetRequest)
+
+	go func() {
+		defer close(ch)
+		defer file.Close()
+
+		reader := csv.NewReader(file)
+		batch := []*PostBetRequest{}
+
+		for {
+			record, err := reader.Read()
+			if err != nil {
+				if err.Error() == "EOF" {
+					if len(batch) > 0 {
+						ch <- batch
+					}
+					break
+				}
+				log.Criticalf("error leyendo CSV: %v", err)
+				break
+			}
+
+			number, _ := strconv.ParseInt(record[4], 10, 64)
+			bet := &PostBetRequest{
+				FirstName: record[0],
+				LastName:  record[1],
+				Document:  record[2],
+				Birthdate: record[3],
+				Number:    number,
+			}
+
+			batch = append(batch, bet)
+			if len(batch) >= batchSize {
+				ch <- batch
+				batch = []*PostBetRequest{}
+			}
+		}
+	}()
+
+	return ch, nil
+}
+
+func (c *Client) StartClientLoop(csvPath string, batchSize int) {
 	c.listenSignals()
 	if err := c.createClientBetSocket(); err != nil {
 		return
 	}
 
-	if err := c.bet_socket.SendBet(&bet); err != nil {
-		log.Criticalf(
-			"action: send bet | result: fail | client_id: %v | error: %v",
-			c.config.ID,
-			err,
-		)
-		return
+	batchCh, err := c.ReadBatches(csvPath, batchSize)
+	if err != nil {
+		log.Fatalf("error al leer CSV: %v", err)
 	}
 
-	if err := c.bet_socket.RecibeConfirm(); err != nil {
-		log.Criticalf(
-			"action: recibe confirm | result: fail | client_id: %v | error: %v",
-			c.config.ID,
-			err,
-		)
-	} else {
-		log.Infof("action: apuesta_enviada | result: success | dni: %v | numero: %v", bet.Document, bet.Number)
+	for batch := range batchCh {
+		if err := c.bet_socket.SendBetBatch(batch); err != nil {
+			log.Criticalf("action: send bet batch | result: fail | client_id: %v | error: %v", c.config.ID, err)
+			break
+		}
+
+		if err := c.bet_socket.RecibeConfirm(); err != nil {
+			log.Criticalf("action: recibeConfrim batch | result: fail | client_id: %v | error: %v", c.config.ID, err)
+			break
+		} else {
+			log.Infof("action: recibeConfrim batch | result: succes | client_id: %v | cantidad: %d", c.config.ID, len(batch))
+		}
 	}
 
+	c.bet_socket.SendEndOfBatch()
 	c.bet_socket.Close()
 }

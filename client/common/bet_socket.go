@@ -49,19 +49,27 @@ func encodeString(s string) []byte {
 	return buf
 }
 
-func (b *BetSocket) SendBet(bet *PostBetRequest) error {
-	var payload []byte
-	payload = append(payload, encodeString(bet.FirstName)...)
-	payload = append(payload, encodeString(bet.LastName)...)
-	payload = append(payload, encodeString(bet.Document)...)
-	payload = append(payload, encodeString(bet.Birthdate)...)
+func (b *BetSocket) SendBetBatch(bets []*PostBetRequest) error {
+	buf := make([]byte, 4)
+	binary.BigEndian.PutUint32(buf, uint32(len(bets)))
 
-	// número (int64 big-endian)
-	numBuf := make([]byte, 8)
-	binary.BigEndian.PutUint64(numBuf, uint64(bet.Number))
-	payload = append(payload, numBuf...)
+	payload := buf
+	for _, bet := range bets {
+		payload = append(payload, encodeString(bet.FirstName)...)
+		payload = append(payload, encodeString(bet.LastName)...)
+		payload = append(payload, encodeString(bet.Document)...)
+		payload = append(payload, encodeString(bet.Birthdate)...)
+
+		numBuf := make([]byte, 8)
+		binary.BigEndian.PutUint64(numBuf, uint64(bet.Number))
+		payload = append(payload, numBuf...)
+	}
 
 	return b.sendAll(payload)
+}
+
+func (b *BetSocket) SendEndOfBatch() error {
+	return b.sendAll(make([]byte, 4))
 }
 
 func (b *BetSocket) RecibeConfirm() error {
