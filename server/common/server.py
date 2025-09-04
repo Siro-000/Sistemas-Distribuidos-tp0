@@ -2,7 +2,7 @@ import signal
 import socket
 import logging
 
-from .bet_socket import BetCommunication
+from .bet_communication import BetCommunication
 from .utils import store_bets
 
 TIMEOUT = 1 
