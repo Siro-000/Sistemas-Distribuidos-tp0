@@ -18,7 +18,6 @@ class Server:
         self._server_socket.settimeout(TIMEOUT)
         self.running = True
         self.error = False
-        self.lotery = False
         self.amount_agency = 0 
         self.agency_winners = {1:[],2:[],3:[],4:[],5:[]}
         
@@ -41,7 +40,7 @@ class Server:
             try: 
                 client_sock = self.__accept_new_connection()
                 self.__handle_client_connection(client_sock)
-                if self.amount_agency == AGENCY_NUMBER and not self.lotery: 
+                if self.amount_agency == AGENCY_NUMBER: 
                     self.make_lottery()
             except socket.timeout:
                 continue 
@@ -53,6 +52,7 @@ class Server:
             agency_id = int(bet.agency)
             if has_won(bet):
                 self.agency_winners[agency_id].append(bet.document)
+        logging.info("action: sorteo | result: success")
             
     def __handle_client_connection(self, client_sock):
         """
@@ -85,7 +85,6 @@ class Server:
             bet_commuication.confirm()
         
         bet_commuication.send_winners(self.agency_winners)
-        logging.info("action: sorteo | result: success")
         
         
     def load_bets(self, bet_communication):
