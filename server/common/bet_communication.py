@@ -1,3 +1,4 @@
+import logging
 from .utils import Bet
 from typing import Optional, Tuple
 
@@ -18,6 +19,7 @@ class IpMapAgenciNumber:
         if ip not in self.ip_to_agency:
             self.ip_to_agency[ip] = self.next_agency
             self.next_agency += 1
+            logging.info(f'NExt agency{self.next_agency}')
         return self.ip_to_agency[ip]
 
 class BetCommunication:
