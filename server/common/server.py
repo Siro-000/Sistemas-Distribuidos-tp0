@@ -18,6 +18,7 @@ class Server:
         self._server_socket.settimeout(TIMEOUT)
         self.running = True
         self.error = False
+        self.lotery = False
         self.amount_agency = 0 
         self.agency_winners = {1:[],2:[],3:[],4:[],5:[]}
         
@@ -40,7 +41,7 @@ class Server:
             try: 
                 client_sock = self.__accept_new_connection()
                 self.__handle_client_connection(client_sock)
-                if self.amount_agency >= AGENCY_NUMBER: 
+                if self.amount_agency == AGENCY_NUMBER and not self.lotery: 
                     self.make_lottery()
             except socket.timeout:
                 continue 
