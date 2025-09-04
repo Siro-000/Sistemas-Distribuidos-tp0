@@ -108,10 +108,17 @@ class BetCommunication:
     
     def send_winners(self, agency_winners: dict): 
         agency = self._ip_map_agenci_number.get_agency_number(
-                self._socket.getpeername()[0]) #la agencia de la comunicaion actual
+                self._socket.getpeername()[0]) #number agency
         
         winners = agency_winners[agency] #the documents winners of the agency
         
+        self._socket.sendall(len(winners).to_bytes(4, "big"))
+        
+        for doc in winners:
+            encoded_doc = doc.encode("utf-8")
+            doc_len = len(encoded_doc)
+            self._socket.sendall(doc_len.to_bytes(4, "big"))
+            self._socket.sendall(encoded_doc)
         
         
     

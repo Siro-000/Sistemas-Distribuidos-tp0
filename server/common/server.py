@@ -15,6 +15,7 @@ class Server:
         self._server_socket.listen(listen_backlog)
         self._server_socket.settimeout(TIMEOUT)
         self.running = True
+        self.error = False
         self.amount_agency = 0 
         self.agency_winers = {1:[],2:[],3:[],4:[],5:[]}
         
@@ -65,18 +66,23 @@ class Server:
             else: 
                 self.give_winners(bet_communication)
         except Exception as e: 
+            self.error = True
             logging.error(f"action: handle client connection | result: fail | error: {e}")
         finally:
             bet_communication.close()
 
     def give_winners(self, bet_commuication: BetCommunication):
-        if self.amount_agency < 5: 
+        if self.error: 
+            bet_commuication.send_error()
+            return
+        elif self.amount_agency < 5: 
             bet_commuication.send_wait()
             return
         else: 
             bet_commuication.confirm()
         
         bet_commuication.send_winners(self.agency_winers)
+        logging.info("action: sorteo | result: success")
         
         
     def load_bets(self, bet_communication):
@@ -93,6 +99,7 @@ class Server:
                 amount_bets += new_bets
                     
             if e: 
+                self.error = True
                 logging.error(f"action: receive_message | result: fail | cantidad: {new_bets}")
                 logging.error(f"action: receive_message | result: fail | Error: {e}")
             else:     
@@ -100,6 +107,7 @@ class Server:
                 self.amount_agency += 1
                     
         except Exception as e:
+            self.error = True
             logging.error(f"action: receive_message | result: fail | Error: {e}")
             bet_communication.send_error_batch()
 

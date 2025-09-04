@@ -15,7 +15,7 @@ import (
 
 var log = logging.MustGetLogger("log")
 
-const WAIT_TIME = 1
+const WAIT_TIME = 2
 const BUFER_SIZE = 1
 
 // ClientConfig Configuration used by the client
@@ -124,11 +124,47 @@ func (c *Client) ReadBatches(filePath string, batchSize int) (<-chan []*PostBetR
 
 func (c *Client) StartClientLoop(csvPath string, batchSize int) {
 	c.listenSignals()
+
+	shouldReturn := c.load_bets(csvPath, batchSize)
+	if shouldReturn {
+		return
+	}
+
+	result := WAIT_CODE
+
+	for result == WAIT_CODE {
+		c.bet_communication.Close()
+		if err := c.createClientBetCommunication(); err != nil {
+			return
+		}
+
+		c.bet_communication.SendOperation(GIVE_WINNERS)
+		result, _ = c.bet_communication.Recibe()
+		if result == ERROR_CODE {
+			log.Criticalf("action: recibe  | result: fail | client_id: %v", c.config.ID)
+			break
+		}
+
+		time.Sleep(WAIT_TIME * time.Second)
+	}
+
+	if winners, err := c.bet_communication.RecibeWinners(); err != nil {
+		log.Criticalf("action: recibe_winners | result: fail | client_id: %v | error: %v", c.config.ID, err)
+	} else {
+		log.Infof("action: recibe_winners | result: success | cant_ganadores: %v", len(winners))
+	}
+
+	c.bet_communication.Close()
+}
+
+func (c *Client) load_bets(csvPath string, batchSize int) bool {
 	problem := false
 
 	if err := c.createClientBetCommunication(); err != nil {
-		return
+		return true
 	}
+
+	c.bet_communication.SendOperation(LOAD_BETS)
 
 	batchCh, err := c.ReadBatches(csvPath, batchSize)
 	if err != nil {
@@ -154,8 +190,9 @@ func (c *Client) StartClientLoop(csvPath string, batchSize int) {
 	if !problem {
 		c.bet_communication.SendEndOfBatch()
 		log.Infof("action: send all batch | result: success | client_id: %v", c.config.ID)
+		return true
 	}
 
 	c.bet_communication.Close()
-
+	return false
 }

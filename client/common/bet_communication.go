@@ -8,8 +8,13 @@ import (
 
 const BYTES_LEN_NUMBER = 8
 const BYTES_LEN_STRING = 4
-const BYTES_LEN_CONFIRM = 1
+const BYTES_LEN_RECIBE = 1
 const BYTES_AMOUNT_OF_BETS = 4
+const WAIT_CODE byte = 2
+const ERROR_CODE byte = 1
+const CONFIRM_CODE byte = 0
+const GIVE_WINNERS = 1
+const LOAD_BETS = 0
 
 type BetCommunication struct {
 	conn net.Conn
@@ -78,7 +83,7 @@ func (b *BetCommunication) SendEndOfBatch() error {
 }
 
 func (b *BetCommunication) RecibeConfirm() error {
-	data, err := b.recvAll(BYTES_LEN_CONFIRM)
+	data, err := b.recvAll(BYTES_LEN_RECIBE)
 	if err != nil {
 		return err
 	}
@@ -94,4 +99,49 @@ func (b *BetCommunication) Close() {
 	if b.conn != nil {
 		b.conn.Close()
 	}
+}
+
+func (b *BetCommunication) SendOperation(operation byte) error {
+	err := b.sendAll([]byte{operation})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (b *BetCommunication) Recibe() (byte, error) {
+	data, err := b.recvAll(BYTES_LEN_RECIBE)
+	if err != nil {
+		return ERROR_CODE, err
+	}
+
+	return data[0], nil
+}
+
+func (b *BetCommunication) RecibeWinners() ([]string, error) {
+	data, err := b.recvAll(4)
+	if err != nil {
+		return nil, err
+	}
+	winnersCount := int(binary.BigEndian.Uint32(data))
+
+	winners := make([]string, 0, winnersCount)
+
+	for i := 0; i < winnersCount; i++ {
+		lenBytes, err := b.recvAll(4)
+		if err != nil {
+			return nil, err
+		}
+		docLen := int(binary.BigEndian.Uint32(lenBytes))
+
+		docBytes, err := b.recvAll(docLen)
+		if err != nil {
+			return nil, err
+		}
+
+		winners = append(winners, string(docBytes))
+	}
+
+	return winners, nil
 }
