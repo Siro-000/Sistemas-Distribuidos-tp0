@@ -53,12 +53,12 @@ class Server:
                 new_bets = amount_bets
                 
                 while bets is not None: 
+                    logging.info(f'action: apuesta_recibida  | result: success | cantidad: {new_bets}')
                     store_bets(bets)
                     bet_socket.confirm_batch()
                     
                     bets, new_bets, e = bet_socket.recibe_bet_batch()
                     amount_bets += new_bets
-                    logging.info(f'action: apuesta_recibida  | result: success | cantidad: {new_bets}')
                 
                 if e: 
                     logging.error(f"action: receive_message | result: fail | cantidad: {new_bets}")
