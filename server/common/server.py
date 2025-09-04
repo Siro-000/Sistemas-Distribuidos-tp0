@@ -2,8 +2,8 @@ import signal
 import socket
 import logging
 
-from .bet_communication import BetCommunication
-from .utils import store_bets
+from .bet_communication import BetCommunication, LOAD_BETS
+from .utils import has_won, load_bets, store_bets
 
 TIMEOUT = 1 
 
@@ -15,6 +15,8 @@ class Server:
         self._server_socket.listen(listen_backlog)
         self._server_socket.settimeout(TIMEOUT)
         self.running = True
+        self.amount_agency = 0 
+        self.agency_winers = {1:[],2:[],3:[],4:[],5:[]}
         
         signal.signal(signal.SIGTERM, self._handle_sigterm)
 
@@ -35,11 +37,19 @@ class Server:
             try: 
                 client_sock = self.__accept_new_connection()
                 self.__handle_client_connection(client_sock)
+                if self.amount_agency >= 5: 
+                    self.make_lottery()
             except socket.timeout:
                 continue 
         
         self._server_socket.close()
-                
+    
+    def make_lottery(self):
+        for bet in load_bets(): 
+            agency_id = int(bet.agency)
+            if has_won(bet):
+                self.agency_winners[agency_id].append(bet.document)
+            
     def __handle_client_connection(self, client_sock):
         """
         Read message from a specific client socket and closes the socket
@@ -48,32 +58,50 @@ class Server:
         client socket will also be closed
         """
         try: 
-            try:
-                bet_communication = BetCommunication(client_sock)
-                bets, amount_bets, e = bet_communication.recibe_bet_batch()
-                new_bets = amount_bets
-                
-                while bets is not None: 
-                    logging.info(f'action: apuesta_recibida  | result: success | cantidad: {new_bets}')
-                    store_bets(bets)
-                    bet_communication.confirm_batch()
-                    
-                    bets, new_bets, e = bet_communication.recibe_bet_batch()
-                    amount_bets += new_bets
-                
-                if e: 
-                    logging.error(f"action: receive_message | result: fail | cantidad: {new_bets}")
-                    logging.error(f"action: receive_message | result: fail | Error: {e}")
-                else:     
-                    logging.info(f'action: recibir apuestas  | result: success | cantidad: {amount_bets}')
-                
-            except Exception as e:
-                logging.error(f"action: receive_message | result: fail | Error: {e}")
-                bet_communication.send_error_batch()
+            bet_communication = BetCommunication(client_sock)
+            operacion = bet_communication.recibe_operacion()
+            if operacion == LOAD_BETS: 
+                self.load_bets(bet_communication)
+            else: 
+                self.give_winners(bet_communication)
         except Exception as e: 
             logging.error(f"action: handle client connection | result: fail | error: {e}")
         finally:
             bet_communication.close()
+
+    def give_winners(self, bet_commuication: BetCommunication):
+        if self.amount_agency < 5: 
+            bet_commuication.send_wait()
+            return
+        else: 
+            bet_commuication.confirm()
+        
+        bet_commuication.send_winners(self.agency_winers)
+        
+        
+    def load_bets(self, bet_communication):
+        try:
+            bets, amount_bets, e = bet_communication.recibe_bet_batch()
+            new_bets = amount_bets
+                    
+            while bets is not None: 
+                logging.info(f'action: apuesta_recibida  | result: success | cantidad: {new_bets}')
+                store_bets(bets)
+                bet_communication.confirm_batch()
+                        
+                bets, new_bets, e = bet_communication.recibe_bet_batch()
+                amount_bets += new_bets
+                    
+            if e: 
+                logging.error(f"action: receive_message | result: fail | cantidad: {new_bets}")
+                logging.error(f"action: receive_message | result: fail | Error: {e}")
+            else:     
+                logging.info(f'action: recibir apuestas  | result: success | cantidad: {amount_bets}')
+                self.amount_agency += 1
+                    
+        except Exception as e:
+            logging.error(f"action: receive_message | result: fail | Error: {e}")
+            bet_communication.send_error_batch()
 
         
 

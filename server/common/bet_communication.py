@@ -6,6 +6,8 @@ CONFIRM_MESSAJE = bytes(1)
 BYTES_AMOUNT_OF_BETS = 4
 BYTES_LEN_STRING = 4 
 BYTES_LEN_NUMBER = 8
+LOAD_BETS = 0 
+GET_WINNERS = 1 
 
 class IpMapAgenciNumber:
     def __init__(self):
@@ -96,3 +98,20 @@ class BetCommunication:
     def close(self):
         self._socket.close()
 
+    
+    def recibe_operacion(self): 
+        byte = self._recv_all(1)
+        return byte[0]
+    
+    def send_wait(self): 
+        self._socket.sendall(bytes([2]))
+    
+    def send_winners(self, agency_winners: dict): 
+        agency = self._ip_map_agenci_number.get_agency_number(
+                self._socket.getpeername()[0]) #la agencia de la comunicaion actual
+        
+        winners = agency_winners[agency] #the documents winners of the agency
+        
+        
+        
+    
