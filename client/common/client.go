@@ -147,13 +147,13 @@ func (c *Client) StartClientLoop(csvPath string, batchSize int) {
 			problem = true
 			break
 		} else {
-			log.Infof("action: recibeConfrim batch | result: succes | client_id: %v | cantidad: %d", c.config.ID, len(batch))
+			log.Infof("action: recibeConfrim batch | result: success | client_id: %v | cantidad: %d", c.config.ID, len(batch))
 		}
 	}
 
 	if !problem {
 		c.bet_socket.SendEndOfBatch()
-		log.Infof("action: send all batch | result: succes | client_id: %v", c.config.ID)
+		log.Infof("action: send all batch | result: success | client_id: %v", c.config.ID)
 	}
 
 	c.bet_socket.Close()
