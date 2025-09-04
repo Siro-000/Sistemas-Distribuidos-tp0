@@ -152,9 +152,9 @@ func (c *Client) StartClientLoop(csvPath string, batchSize int) {
 	}
 
 	if winners, err := c.bet_communication.RecibeWinners(); err != nil {
-		log.Criticalf("action: recibe_winners | result: fail | client_id: %v | error: %v", c.config.ID, err)
+		log.Criticalf("action: consulta_ganadores | result: success | error: %v", err)
 	} else {
-		log.Infof("action: recibe_winners | result: success | cant_ganadores: %v", len(winners))
+		log.Infof("action: consulta_ganadores | result: success | cant_ganadores: %v", len(winners))
 	}
 
 	c.bet_communication.Close()
