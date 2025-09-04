@@ -52,6 +52,7 @@ class Server:
             agency_id = int(bet.agency)
             if has_won(bet):
                 self.agency_winners[agency_id].append(bet.document)
+        logging.info(f"Esto son los ganadores {self.agency_winners}")
         logging.info("action: sorteo | result: success")
             
     def __handle_client_connection(self, client_sock):
