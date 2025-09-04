@@ -93,7 +93,7 @@ class Server:
             new_bets = amount_bets
                     
             while bets is not None: 
-                #logging.info(f'action: apuesta_recibida  | result: success | cantidad: {new_bets}')
+                logging.info(f'action: apuesta_recibida  | result: success | cantidad: {new_bets}')
                 store_bets(bets)
                 bet_communication.confirm_batch()
                         
