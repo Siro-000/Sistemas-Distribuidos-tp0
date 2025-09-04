@@ -25,14 +25,16 @@ def def_network(f):
     f.write("      config:\n")
     f.write("        - subnet: 172.25.125.0/24\n")
 
-def def_server(f):
+def def_server(f, num_clients):
     f.write("  server:\n")
     f.write("    container_name: server\n")
     f.write("    image: server:latest\n")
     f.write("    entrypoint: python3 /main.py\n")
     f.write("    networks:\n")
     f.write("      - testing_net\n")
-    f.write("    volumes:\n")  # Montar archivo de configuración externo
+    f.write("    environment:\n")
+    f.write(f"      - NUM_AGENCY={num_clients}\n") 
+    f.write("    volumes:\n")  
     f.write("      - ./server/config.ini:/config.ini\n")
     f.write("\n")
 
@@ -40,7 +42,7 @@ def def_server(f):
 def def_service(cantidad_clientes, f):
     f.write("services:\n")
         
-    def_server(f)
+    def_server(f, cantidad_clientes)
 
     def_clientes(cantidad_clientes, f)
     

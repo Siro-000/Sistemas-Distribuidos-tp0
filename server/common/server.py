@@ -1,3 +1,4 @@
+import os
 import signal
 import socket
 import logging
@@ -6,6 +7,7 @@ from .bet_communication import BetCommunication, LOAD_BETS
 from .utils import has_won, load_bets, store_bets
 
 TIMEOUT = 1 
+AGENCY_NUMBER = int(os.getenv("NUM_AGENCY"))
 
 class Server:
     def __init__(self, port, listen_backlog):
@@ -38,7 +40,7 @@ class Server:
             try: 
                 client_sock = self.__accept_new_connection()
                 self.__handle_client_connection(client_sock)
-                if self.amount_agency >= 5: 
+                if self.amount_agency >= AGENCY_NUMBER: 
                     self.make_lottery()
             except socket.timeout:
                 continue 
@@ -75,7 +77,7 @@ class Server:
         if self.error: 
             bet_commuication.send_error()
             return
-        elif self.amount_agency < 5: 
+        elif self.amount_agency < AGENCY_NUMBER : 
             bet_commuication.send_wait()
             return
         else: 
