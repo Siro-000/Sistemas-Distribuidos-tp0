@@ -2,9 +2,10 @@ import signal
 import socket
 import logging
 
-from .bet_socket import BetSocket
+from .bet_socket import BetCommunication
 from .utils import store_bets
 
+TIMEOUT = 1 
 
 class Server:
     def __init__(self, port, listen_backlog):
@@ -12,7 +13,7 @@ class Server:
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.bind(('', port))
         self._server_socket.listen(listen_backlog)
-        self._server_socket.settimeout(1)
+        self._server_socket.settimeout(TIMEOUT)
         self.running = True
         
         signal.signal(signal.SIGTERM, self._handle_sigterm)
@@ -48,16 +49,16 @@ class Server:
         """
         try: 
             try:
-                bet_socket = BetSocket(client_sock)
-                bets, amount_bets, e = bet_socket.recibe_bet_batch()
+                bet_communication = BetCommunication(client_sock)
+                bets, amount_bets, e = bet_communication.recibe_bet_batch()
                 new_bets = amount_bets
                 
                 while bets is not None: 
                     logging.info(f'action: apuesta_recibida  | result: success | cantidad: {new_bets}')
                     store_bets(bets)
-                    bet_socket.confirm_batch()
+                    bet_communication.confirm_batch()
                     
-                    bets, new_bets, e = bet_socket.recibe_bet_batch()
+                    bets, new_bets, e = bet_communication.recibe_bet_batch()
                     amount_bets += new_bets
                 
                 if e: 
@@ -68,11 +69,11 @@ class Server:
                 
             except Exception as e:
                 logging.error(f"action: receive_message | result: fail | Error: {e}")
-                bet_socket.send_error_batch()
+                bet_communication.send_error_batch()
         except Exception as e: 
             logging.error(f"action: handle client connection | result: fail | error: {e}")
         finally:
-            bet_socket.close()
+            bet_communication.close()
 
         
 

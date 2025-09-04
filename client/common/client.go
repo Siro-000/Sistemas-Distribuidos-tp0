@@ -28,10 +28,10 @@ type ClientConfig struct {
 
 // Client Entity that encapsulates how
 type Client struct {
-	config     ClientConfig
-	bet_socket *BetSocket
-	ctx        context.Context
-	cancel     context.CancelFunc
+	config            ClientConfig
+	bet_communication *BetCommunication
+	ctx               context.Context
+	cancel            context.CancelFunc
 }
 
 // NewClient Initializes a new client receiving the configuration
@@ -52,14 +52,14 @@ func (c *Client) listenSignals() {
 		sig := <-sigCh
 		log.Infof("action: received signal %v | result: in_progress", sig)
 		c.cancel()
-		c.bet_socket.Close()
+		c.bet_communication.Close()
 	}()
 }
 
 // CreateClientSocket Initializes client socket. In case of
 // failure, error is printed in stdout/stderr and exit 1
 // is returned
-func (c *Client) createClientBetSocket() error {
+func (c *Client) createClientBetCommunication() error {
 	conn, err := net.Dial("tcp", c.config.ServerAddress)
 	if err != nil {
 		log.Criticalf(
@@ -70,7 +70,7 @@ func (c *Client) createClientBetSocket() error {
 		return err
 	}
 
-	c.bet_socket = NewBetSocket(conn)
+	c.bet_communication = NewBetCommunication(conn)
 	return nil
 }
 
@@ -126,7 +126,7 @@ func (c *Client) StartClientLoop(csvPath string, batchSize int) {
 	c.listenSignals()
 	problem := false
 
-	if err := c.createClientBetSocket(); err != nil {
+	if err := c.createClientBetCommunication(); err != nil {
 		return
 	}
 
@@ -136,13 +136,13 @@ func (c *Client) StartClientLoop(csvPath string, batchSize int) {
 	}
 
 	for batch := range batchCh {
-		if err := c.bet_socket.SendBetBatch(batch); err != nil {
+		if err := c.bet_communication.SendBetBatch(batch); err != nil {
 			log.Criticalf("action: send bet batch | result: fail | client_id: %v | error: %v", c.config.ID, err)
 			problem = true
 			break
 		}
 
-		if err := c.bet_socket.RecibeConfirm(); err != nil {
+		if err := c.bet_communication.RecibeConfirm(); err != nil {
 			log.Criticalf("action: recibeConfrim batch | result: fail | client_id: %v | error: %v", c.config.ID, err)
 			problem = true
 			break
@@ -152,10 +152,10 @@ func (c *Client) StartClientLoop(csvPath string, batchSize int) {
 	}
 
 	if !problem {
-		c.bet_socket.SendEndOfBatch()
+		c.bet_communication.SendEndOfBatch()
 		log.Infof("action: send all batch | result: success | client_id: %v", c.config.ID)
 	}
 
-	c.bet_socket.Close()
+	c.bet_communication.Close()
 
 }

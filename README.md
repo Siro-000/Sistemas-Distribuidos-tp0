@@ -1,20 +1,13 @@
 # TP0: Docker + Comunicaciones + Concurrencia
 
-## Solucion ejercisio 5 
-Para resolucion del ejercisio 5 el protocolo que se implemento es el siguiente: 
+## Solucion ejercisio 6 
+Para resolucion del ejercisio 6 el protocolo de mensajes se modifico un poco.
 
-Consite en esquema de pasaje de mensajes mixto
+Ahora el cliente manda de a batch, es decir, en de avarias apuestas por mensajes. 
 
-El cliente empieza directamente enviandole la solicitud de apuesta, que tiene los campos nombre(str), apellido(str), documento(str), birhdate(str) y numero(int64). 
+El cliente va a leer desde el csv una cierta cantidad de bets, con las cuales va a construir un batch. Para hacerlo, en los primeros 4 bytes pone la cantidad de apuestas. Luego completa iterativamente con apuestas, siguiendo la linea de serializacion de apuestas del ejercisio anterior.
 
-Para los campos str se envia primero en 4 bytes su tamaño, para luego leer la cantidad de bytes. 
+El servidor va a ir leyendo del canal los batch, comenzando con los primeros 4 bytes para saber la cantidad de bets que hay, para luego des-estructurar de forma iterativa como se venia haciendo. 
+Si se recibe bien, el servidor manda una confirmacion al cliente de un byte de 0s. Si hay algun error, le avisa y se corta la comunicacion. 
 
-El campo numero int64 tiene tamaño fijo. 
-
-El servidor lee los primeros 4 bytes donde saca el tamaño del campo, lee el campo y repite. Del ultimo campo ya sabe el tamaño porque es fijo. 
-
-El campo de agencia, para completar la apuesta, se asgina con la ip. Es decir, todos las apuestas mandas por una misam ip, automaticamente se le asignan el mismo numero.  
-
-Si sale todo okey, el servidor manda una confirmacion de 1 byte de todos 0. Y el cliente no cierra sesion hasta recibir la confirmacion. 
-
-En el codigo actual no se hace nada, mas que avisar al cliente de que no se envio correctamente, pero en un esenario de tolerancia a fallos ese codigo de confirmacion podria usarse para recibir errores y voler a enviar la apuesta.
+Para avisarle el cliente de que no hay mas batch para leer, el cliente le manda un batch al servidor de tamaño. El servidor lo recibe y sabe que hay que terminar la comunicacion. 
