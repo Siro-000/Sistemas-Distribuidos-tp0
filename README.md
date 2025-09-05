@@ -1,13 +1,16 @@
 # TP0: Docker + Comunicaciones + Concurrencia
 
-## Solucion ejercisio 6 
-Para resolucion del ejercisio 6 el protocolo de mensajes se modifico un poco.
+## Solucion ejercisio 7 
+Para resolucion del ejercisio 7 el protocolo de mensajes se modifico un poco.
 
-Ahora el cliente manda de a batch, es decir, en de avarias apuestas por mensajes. 
+Ahora el ejercisio propone dos operacion para el cliente por asi decirlo, `load_bets` y `get_winners`. Entonces para avisarle al sevidor que operacionse quiere hacer, se manda primero un mensaje de un byte, que representa el CODIGO de la operacion, y una vez enviado, recien ahi se ejecuta la operacion.
 
-El cliente va a leer desde el csv una cierta cantidad de bets, con las cuales va a construir un batch. Para hacerlo, en los primeros 4 bytes pone la cantidad de apuestas. Luego completa iterativamente con apuestas, siguiendo la linea de serializacion de apuestas del ejercisio anterior.
+El `load_bets` es igual a lo que se hacia en el ejercisio 6.  
 
-El servidor va a ir leyendo del canal los batch, comenzando con los primeros 4 bytes para saber la cantidad de bets que hay, para luego des-estructurar de forma iterativa como se venia haciendo. 
-Si se recibe bien, el servidor manda una confirmacion al cliente de un byte de 0s. Si hay algun error, le avisa y se corta la comunicacion. 
+El `get_winners`, el cliente le pide al servidor los ganadores. El servidor le puede responder `CONFIRM`, `ERROR` o `WAIT` (esto respeta los codigos de respuesta de un byte que veniamos teneniedo, pero ahora se agrego `WAIT`). Si responde `WAIT`, el cliente cierra la conexion, hace sleep y despues de un tiempo vuelve a preguntar. 
+El `ERROR` esta por si hubo algun fallo con alguno de los otros agencias y por lo tanto no se puede hacer la loteria. 
 
-Para avisarle el cliente de que no hay mas batch para leer, el cliente le manda un batch al servidor de tamaño. El servidor lo recibe y sabe que hay que terminar la comunicacion. 
+Desde la vista del servidor, una vez todas las agencias suben sus apuestas. Se hace el sorteo y se guarda por cada agencia los documentos ganadores. 
+
+Cuando un cliente le solicita los ganadores, se le manda todos en un solo mensaje. El paquete se constuye con 4 bytes al princio para indicar la cantidad de ganadores, luego con el formato de mandar strings que se venia teniendo de mandar 4 bytes del tamaño y luego el mensaje. 
+

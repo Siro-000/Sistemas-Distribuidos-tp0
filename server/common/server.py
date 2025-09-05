@@ -3,7 +3,7 @@ import signal
 import socket
 import logging
 
-from .bet_communication import BetCommunication, LOAD_BETS, IpMapAgenciNumber
+from .bet_communication import BetCommunication, LOAD_BETS, IpMapAgencyNumber
 from .utils import has_won, load_bets, store_bets
 
 TIMEOUT = 1 
@@ -11,18 +11,18 @@ AGENCY_NUMBER = int(os.getenv("NUM_AGENCY"))
 
 class Server:
     def __init__(self, port, listen_backlog):
-        # Initialize server socket
-        self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)# Initialize server socket
         self._server_socket.bind(('', port))
         self._server_socket.listen(listen_backlog)
         self._server_socket.settimeout(TIMEOUT)
         self.running = True
+        
         self.lottery = False
         
         self.error = False
         self.amount_agency = 0 
         self.agency_winners = {1:[],2:[],3:[],4:[],5:[]}
-        self._ip_map_agenci_number = IpMapAgenciNumber()
+        self._ip_map_agency_number = IpMapAgencyNumber()
         
         signal.signal(signal.SIGTERM, self._handle_sigterm)
 
@@ -57,7 +57,6 @@ class Server:
             agency_id = int(bet.agency)
             if has_won(bet):
                 self.agency_winners[agency_id].append(bet.document)
-        logging.info(f"Esto son los ganadores {self.agency_winners}")
         logging.info("action: sorteo | result: success")
             
     def __handle_client_connection(self, client_sock):
@@ -68,7 +67,7 @@ class Server:
         client socket will also be closed
         """
         try: 
-            bet_communication = BetCommunication(client_sock, self._ip_map_agenci_number)
+            bet_communication = BetCommunication(client_sock, self._ip_map_agency_number)
             operacion = bet_communication.recibe_operacion()
             if operacion == LOAD_BETS: 
                 self.load_bets(bet_communication)
@@ -101,25 +100,23 @@ class Server:
             while bets is not None: 
                 logging.info(f'action: apuesta_recibida  | result: success | cantidad: {new_bets}')
                 store_bets(bets)
-                bet_communication.confirm_batch()
+                bet_communication.confirm()
                         
                 bets, new_bets, e = bet_communication.recibe_bet_batch()
                 amount_bets += new_bets
                     
             if e: 
                 self.error = True
-                logging.error(f"action: receive_message | result: fail | cantidad: {new_bets}")
-                logging.error(f"action: receive_message | result: fail | Error: {e}")
+                logging.error(f"action: receive_message | result: fail | cantidad: {new_bets} | Error: {e}")
             else:     
                 logging.info(f'action: recibir apuestas  | result: success | cantidad: {amount_bets}')
                 self.amount_agency += 1
-                logging.info(f'La cantidad de agencias que ya mandaron: {self.amount_agency}')
                 
                     
         except Exception as e:
             self.error = True
             logging.error(f"action: receive_message | result: fail | Error: {e}")
-            bet_communication.send_error_batch()
+            bet_communication.send_error()
 
         
 

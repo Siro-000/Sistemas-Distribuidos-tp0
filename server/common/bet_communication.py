@@ -2,15 +2,20 @@ import logging
 from .utils import Bet
 from typing import Optional, Tuple
 
+CONFIRM_CODE = 0
 ERROR_CODE = 1 
-CONFIRM_MESSAJE = bytes(1)
-BYTES_AMOUNT_OF_BETS = 4
-BYTES_LEN_STRING = 4 
-BYTES_LEN_NUMBER = 8
+WAIT_CODE = 2 
+
+OPERATION_SIZE = 1
 LOAD_BETS = 0 
 GET_WINNERS = 1 
 
-class IpMapAgenciNumber:
+BYTES_AMOUNT_OF_BETS = 4
+BYTES_AMOUNT_OF_WINNERS = 4 
+BYTES_LEN_STRING = 4 
+BYTES_LEN_NUMBER = 8
+
+class IpMapAgencyNumber:
     def __init__(self):
         self.ip_to_agency = {}
         self.next_agency = 1 
@@ -23,9 +28,9 @@ class IpMapAgenciNumber:
         return self.ip_to_agency[ip]
 
 class BetCommunication():
-    def __init__(self, socket, ip_map_agenci_number):
+    def __init__(self, socket, ip_map_agency_number):
         self._socket = socket
-        self._ip_map_agenci_number = ip_map_agenci_number
+        self._ip_map_agency_number = ip_map_agency_number
     
     def _recv_all(self, n: int) -> bytes:
         data = b''
@@ -55,7 +60,7 @@ class BetCommunication():
         number = int.from_bytes(number_bytes, "big")
 
         return Bet(
-            agency=self._ip_map_agenci_number.get_agency_number(
+            agency=self._ip_map_agency_number.get_agency_number(
                 self._socket.getpeername()[0]
             ),
             first_name=first_name,
@@ -85,42 +90,36 @@ class BetCommunication():
                   
         return (bets, batch_len, None)
 
-    def confirm_batch(self):
-        self._socket.sendall(CONFIRM_MESSAJE)
-
-    def send_error_batch(self):
-        self._socket.sendall(bytes([ERROR_CODE]))
-        
     def confirm(self):
-        self._socket.sendall(CONFIRM_MESSAJE)
+        self._socket.sendall(bytes([CONFIRM_CODE]))
     
     def send_error(self):
         self._socket.sendall(bytes([ERROR_CODE]))
         
-    def close(self):
-        self._socket.close()
-
+    def send_wait(self): 
+        self._socket.sendall(bytes([WAIT_CODE]))
+    
     
     def recibe_operacion(self): 
-        byte = self._recv_all(1)
+        byte = self._recv_all(OPERATION_SIZE)
         return byte[0]
     
-    def send_wait(self): 
-        self._socket.sendall(bytes([2]))
     
     def send_winners(self, agency_winners: dict): 
-        agency = self._ip_map_agenci_number.get_agency_number(
+        agency = self._ip_map_agency_number.get_agency_number(
                 self._socket.getpeername()[0]) #number agency
         
         winners = agency_winners[agency] #the documents winners of the agency
         
-        self._socket.sendall(len(winners).to_bytes(4, "big"))
+        self._socket.sendall(len(winners).to_bytes(BYTES_AMOUNT_OF_WINNERS, "big"))
         
         for doc in winners:
             encoded_doc = doc.encode("utf-8")
             doc_len = len(encoded_doc)
-            self._socket.sendall(doc_len.to_bytes(4, "big"))
+            self._socket.sendall(doc_len.to_bytes(BYTES_LEN_STRING, "big"))
             self._socket.sendall(encoded_doc)
         
+    def close(self):
+        self._socket.close()
         
     
