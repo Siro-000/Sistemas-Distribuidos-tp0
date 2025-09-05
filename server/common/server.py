@@ -17,6 +17,7 @@ class Server:
         self._server_socket.listen(listen_backlog)
         self._server_socket.settimeout(TIMEOUT)
         self.running = True
+        self.lottery = False
         
         self.error = False
         self.amount_agency = 0 
@@ -42,8 +43,10 @@ class Server:
             try: 
                 client_sock = self.__accept_new_connection()
                 self.__handle_client_connection(client_sock)
-                if self.amount_agency == AGENCY_NUMBER: 
+                
+                if self.amount_agency == AGENCY_NUMBER and not self.lottery: 
                     self.make_lottery()
+                    self.lottery = True
             except socket.timeout:
                 continue 
         
@@ -94,7 +97,7 @@ class Server:
         try:
             bets, amount_bets, e = bet_communication.recibe_bet_batch()
             new_bets = amount_bets
-                    
+             
             while bets is not None: 
                 logging.info(f'action: apuesta_recibida  | result: success | cantidad: {new_bets}')
                 store_bets(bets)
