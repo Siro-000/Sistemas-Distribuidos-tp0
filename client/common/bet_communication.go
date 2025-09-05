@@ -11,6 +11,7 @@ const BYTES_LEN_STRING = 4
 const BYTES_LEN_RECIBE = 1
 
 const BYTES_AMOUNT_OF_BETS = 4
+const BYTES_AMOUNT_OF_WINNERS = 4
 const WAIT_CODE byte = 2
 const ERROR_CODE byte = 1
 const CONFIRM_CODE byte = 0
@@ -121,7 +122,7 @@ func (b *BetCommunication) Recibe() (byte, error) {
 }
 
 func (b *BetCommunication) RecibeWinners() ([]string, error) {
-	data, err := b.recvAll(4)
+	data, err := b.recvAll(BYTES_AMOUNT_OF_WINNERS)
 	if err != nil {
 		return nil, err
 	}
