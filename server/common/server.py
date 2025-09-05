@@ -29,6 +29,7 @@ class Server:
         self.bets_csv_lock = threading.Lock()
         self.amount_agency_lock = threading.Lock()
         self.ip_map_agency_number_look = threading.Lock()
+        self.condition = threading.Condition()
         
         
         signal.signal(signal.SIGTERM, self._handle_sigterm)
@@ -82,6 +83,8 @@ class Server:
                     self.agency_winners[agency_id].append(bet.document)
                 
         logging.info("action: sorteo | result: success")
+        with self.condition:
+            self.condition.notify_all()
             
     def __handle_client_connection(self, client_sock):
         """
@@ -107,12 +110,10 @@ class Server:
         if self.error: 
             bet_commuication.send_error()
             return
-        elif self.amount_agency < AGENCY_NUMBER : 
-            bet_commuication.send_wait()
-            return
-        else: 
-            bet_commuication.confirm()
-        
+        elif self.amount_agency < AGENCY_NUMBER: 
+            with self.condition:  
+                self.condition.wait()
+                
         bet_commuication.send_winners(self.agency_winners)
         
         
