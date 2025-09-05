@@ -9,6 +9,7 @@ import (
 const BYTES_LEN_NUMBER = 8
 const BYTES_LEN_STRING = 4
 const BYTES_LEN_RECIBE = 1
+
 const BYTES_AMOUNT_OF_BETS = 4
 const WAIT_CODE byte = 2
 const ERROR_CODE byte = 1
@@ -79,7 +80,7 @@ func (b *BetCommunication) SendBetBatch(bets []*PostBetRequest) error {
 }
 
 func (b *BetCommunication) SendEndOfBatch() error {
-	return b.sendAll(make([]byte, 4))
+	return b.sendAll(make([]byte, BYTES_AMOUNT_OF_BETS))
 }
 
 func (b *BetCommunication) RecibeConfirm() error {
@@ -129,7 +130,7 @@ func (b *BetCommunication) RecibeWinners() ([]string, error) {
 	winners := make([]string, 0, winnersCount)
 
 	for i := 0; i < winnersCount; i++ {
-		lenBytes, err := b.recvAll(4)
+		lenBytes, err := b.recvAll(BYTES_LEN_STRING)
 		if err != nil {
 			return nil, err
 		}
