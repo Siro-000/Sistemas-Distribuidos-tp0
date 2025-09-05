@@ -2,6 +2,7 @@ import os
 import signal
 import socket
 import logging
+import threading
 
 from .bet_communication import BetCommunication, LOAD_BETS, IpMapAgencyNumber
 from .utils import has_won, load_bets, store_bets
@@ -17,12 +18,18 @@ class Server:
         self._server_socket.settimeout(TIMEOUT)
         self.running = True
         
-        self.lottery = False
-        
         self.error = False
+        
+        self.lottery = False
         self.amount_agency = 0 
         self.agency_winners = {1:[],2:[],3:[],4:[],5:[]}
         self._ip_map_agency_number = IpMapAgencyNumber()
+        
+        self.threads = []
+        self.bets_csv_lock = threading.Lock()
+        self.amount_agency_lock = threading.Lock()
+        self.ip_map_agency_number_look = threading.Lock()
+        
         
         signal.signal(signal.SIGTERM, self._handle_sigterm)
 
@@ -40,23 +47,40 @@ class Server:
         """
 
         while self.running:
-            try: 
+            try:
                 client_sock = self.__accept_new_connection()
-                self.__handle_client_connection(client_sock)
+
+                t = threading.Thread(
+                    target=self.__handle_client_connection,
+                    args=(client_sock,)
+                )
+                t.start()
+                self.threads.append(t)
+
                 
-                if self.amount_agency == AGENCY_NUMBER and not self.lottery: 
+                self.threads = [thr for thr in self.threads if thr.is_alive()] # limpieza de hilos terminados
+
+                if self.amount_agency == AGENCY_NUMBER and not self.lottery:
                     self.make_lottery()
                     self.lottery = True
+
             except socket.timeout:
-                continue 
-        
+                continue
+
+        # esperar a que terminen todos los hilos activos
+        logging.info("Servidor apagándose, esperando hilos...")
+        for t in self.threads:
+            t.join()
+
         self._server_socket.close()
     
     def make_lottery(self):
-        for bet in load_bets(): 
-            agency_id = int(bet.agency)
-            if has_won(bet):
-                self.agency_winners[agency_id].append(bet.document)
+        with self.bet_csv_lock:
+            for bet in load_bets(): 
+                agency_id = int(bet.agency)
+                if has_won(bet):
+                    self.agency_winners[agency_id].append(bet.document)
+                
         logging.info("action: sorteo | result: success")
             
     def __handle_client_connection(self, client_sock):
@@ -67,7 +91,7 @@ class Server:
         client socket will also be closed
         """
         try: 
-            bet_communication = BetCommunication(client_sock, self._ip_map_agency_number)
+            bet_communication = BetCommunication(client_sock, self._ip_map_agency_number, self.ip_map_agency_number_look)
             operacion = bet_communication.recibe_operacion()
             if operacion == LOAD_BETS: 
                 self.load_bets(bet_communication)
@@ -99,7 +123,10 @@ class Server:
              
             while bets is not None: 
                 logging.info(f'action: apuesta_recibida  | result: success | cantidad: {new_bets}')
-                store_bets(bets)
+                
+                with self.bet_csv_lock:
+                    store_bets(bets)
+                
                 bet_communication.confirm()
                         
                 bets, new_bets, e = bet_communication.recibe_bet_batch()
@@ -110,7 +137,8 @@ class Server:
                 logging.error(f"action: receive_message | result: fail | cantidad: {new_bets} | Error: {e}")
             else:     
                 logging.info(f'action: recibir apuestas  | result: success | cantidad: {amount_bets}')
-                self.amount_agency += 1
+                with self.amount_agency_lock:
+                    self.amount_agency += 1
                 
                     
         except Exception as e:

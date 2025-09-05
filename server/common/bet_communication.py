@@ -1,4 +1,3 @@
-import logging
 from .utils import Bet
 from typing import Optional, Tuple
 
@@ -28,9 +27,10 @@ class IpMapAgencyNumber:
         return self.ip_to_agency[ip]
 
 class BetCommunication():
-    def __init__(self, socket, ip_map_agency_number):
+    def __init__(self, socket, ip_map_agency_number, ip_map_agency_number_look):
         self._socket = socket
         self._ip_map_agency_number = ip_map_agency_number
+        self._ip_map_agency_number_look = ip_map_agency_number_look
     
     def _recv_all(self, n: int) -> bytes:
         data = b''
@@ -59,10 +59,12 @@ class BetCommunication():
         number_bytes = self._recv_all(BYTES_LEN_NUMBER)
         number = int.from_bytes(number_bytes, "big")
 
+        with self._ip_map_agency_number_look:
+            agency = self._ip_map_agency_number.get_agency_number(
+                    self._socket.getpeername()[0])
+
         return Bet(
-            agency=self._ip_map_agency_number.get_agency_number(
-                self._socket.getpeername()[0]
-            ),
+            agency=agency,
             first_name=first_name,
             last_name=last_name,
             document=document,
