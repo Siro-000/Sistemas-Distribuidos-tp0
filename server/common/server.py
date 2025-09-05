@@ -3,7 +3,7 @@ import signal
 import socket
 import logging
 
-from .bet_communication import BetCommunication, LOAD_BETS
+from .bet_communication import BetCommunication, LOAD_BETS, IpMapAgenciNumber
 from .utils import has_won, load_bets, store_bets
 
 TIMEOUT = 1 
@@ -17,9 +17,11 @@ class Server:
         self._server_socket.listen(listen_backlog)
         self._server_socket.settimeout(TIMEOUT)
         self.running = True
+        
         self.error = False
         self.amount_agency = 0 
         self.agency_winners = {1:[],2:[],3:[],4:[],5:[]}
+        self._ip_map_agenci_number = IpMapAgenciNumber()
         
         signal.signal(signal.SIGTERM, self._handle_sigterm)
 
@@ -63,7 +65,7 @@ class Server:
         client socket will also be closed
         """
         try: 
-            bet_communication = BetCommunication(client_sock)
+            bet_communication = BetCommunication(client_sock, self._ip_map_agenci_number)
             operacion = bet_communication.recibe_operacion()
             if operacion == LOAD_BETS: 
                 self.load_bets(bet_communication)

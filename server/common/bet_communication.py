@@ -17,15 +17,15 @@ class IpMapAgenciNumber:
     
     def get_agency_number(self, ip: str) -> int:
         if ip not in self.ip_to_agency:
-            self.ip_to_agency[ip] = self.next_agency
+            assigned = self.next_agency
+            self.ip_to_agency[ip] = assigned
             self.next_agency += 1
-            logging.info(f'NExt agency{self.next_agency}')
         return self.ip_to_agency[ip]
 
-class BetCommunication:
-    def __init__(self, socket):
+class BetCommunication():
+    def __init__(self, socket, ip_map_agenci_number):
         self._socket = socket
-        self._ip_map_agenci_number = IpMapAgenciNumber()
+        self._ip_map_agenci_number = ip_map_agenci_number
     
     def _recv_all(self, n: int) -> bytes:
         data = b''
