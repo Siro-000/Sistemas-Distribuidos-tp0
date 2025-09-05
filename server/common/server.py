@@ -75,7 +75,7 @@ class Server:
         self._server_socket.close()
     
     def make_lottery(self):
-        with self.bet_csv_lock:
+        with self.bets_csv_lock:
             for bet in load_bets(): 
                 agency_id = int(bet.agency)
                 if has_won(bet):
@@ -124,7 +124,7 @@ class Server:
             while bets is not None: 
                 logging.info(f'action: apuesta_recibida  | result: success | cantidad: {new_bets}')
                 
-                with self.bet_csv_lock:
+                with self.bets_csv_lock:
                     store_bets(bets)
                 
                 bet_communication.confirm()
